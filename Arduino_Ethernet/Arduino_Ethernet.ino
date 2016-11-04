@@ -2,11 +2,13 @@
   TATCO Inc.
   Contact:
   info@tatco.cc
+  
 
   created 10 Oct 2015
   by Rabee Alhattawi
   modified 04 Nov 2016
   by Rabee Alhattawi
+  https://github.com/rabee2050/Arduino-Ethernet-Kit.git
 
   Note:
   1- This sketch compatable with Eathernet shield and Wiznet W5100
@@ -38,7 +40,7 @@ void setup(void)
   //Ethernet.begin(mac, ip);// Uncomment for fixed IP
   Ethernet.begin(mac); // Comment for fixed IP
   httpServer.begin();
-  EthernetBonjour.begin("ethernet");//Insted of IP you can use http://ethernet.local inside the app
+  EthernetBonjour.begin("ethernet");//Insted of IP you can use http://ethernet.local inside the app for iOS only
   EthernetBonjour.addServiceRecord("ethernet", 80, MDNSServiceTCP);
   Serial.println(Ethernet.localIP());
 
@@ -116,8 +118,6 @@ void process(EthernetClient client) {
   if (command == "allstatus") {
     allstatus(client);
   }
-
-
 }
 
 
