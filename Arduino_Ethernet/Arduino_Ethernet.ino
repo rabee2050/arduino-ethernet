@@ -21,7 +21,6 @@
 #include <Ethernet.h>
 #include <EthernetBonjour.h>//to resolve host names via MDNS (Multicast DNS)
 
-boolean incoming = 0;
 byte mac[] = { 0x00, 0xAA, 0xBB, 0xCC, 0xDA, 0x02 };
 //IPAddress ip(192, 168, 1, 10); //Uncomment for fixed IP or leave for DHCP
 EthernetServer httpServer(80);
@@ -118,6 +117,7 @@ void process(EthernetClient client) {
   if (command == "allstatus") {
     allstatus(client);
   }
+
 }
 
 
@@ -188,10 +188,15 @@ void modeCommand(EthernetClient client) {
 void allonoff(EthernetClient client) {
   int pin, value;
   value = client.parseInt();
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-Type: text/html");
+  client.println("Connection: close");
+  client.println();
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
   for (byte i = 0; i <= 13; i++) {
     if (mode_action[i] == 'o') {
       digitalWrite(i, value);
+      mode_val[i]=value;
     }
   }
 #endif
@@ -199,9 +204,11 @@ void allonoff(EthernetClient client) {
   for (byte i = 0; i <= 53; i++) {
     if (mode_action[i] == 'o') {
       digitalWrite(i, value);
+      mode_val[i]=value;
     }
   }
 #endif
+client.stop();
 
 }
 
