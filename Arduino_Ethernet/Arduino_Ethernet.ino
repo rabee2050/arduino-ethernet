@@ -2,7 +2,7 @@
   TATCO Inc.
   Contact:
   info@tatco.cc
-  
+
 
   created 10 Oct 2015
   by Rabee Alhattawi
@@ -15,11 +15,12 @@
   2- Tested with Mega, Uno, Leo
   3- Uno & Leo pins# 10, 11, 12, 13 used for ethernet shield
   4- Mega Pins# 10, 50, 51, 52, 53 used for ethernet shield
+  5- EthernetBonjour not completely tested, stability issues have to be considered.
 */
 
 #include <SPI.h>
 #include <Ethernet.h>
-#include <EthernetBonjour.h>//to resolve host names via MDNS (Multicast DNS)
+//#include <EthernetBonjour.h>//to resolve host names via MDNS (Multicast DNS)
 
 byte mac[] = { 0x00, 0xAA, 0xBB, 0xCC, 0xDA, 0x02 };
 //IPAddress ip(192, 168, 1, 10); //Uncomment for fixed IP or leave for DHCP
@@ -31,21 +32,21 @@ int mode_val[54];
 
 void setup(void)
 {
-  //  while (!Serial) {
-  //    ;// wait for serial port to connect. Needed for Leonardo only
-  //  }
+//  while (!Serial) {
+//    ;// wait for serial port to connect. Needed for Leonardo only
+//  }
   Serial.begin(9600);
   Serial.println(F("Please wait for IP... "));
   //Ethernet.begin(mac, ip);// Uncomment for fixed IP
   Ethernet.begin(mac); // Comment for fixed IP
   httpServer.begin();
-  EthernetBonjour.begin("ethernet");//Insted of IP you can use http://ethernet.local inside the app for iOS only
-  EthernetBonjour.addServiceRecord("ethernet", 80, MDNSServiceTCP);
+  //  EthernetBonjour.begin("ethernet");//Insted of IP you can use hostname http://ethernet.local to connect in the app.-->> for iOS only
+  //  EthernetBonjour.addServiceRecord("ethernet", 80, MDNSServiceTCP);
   Serial.println(Ethernet.localIP());
 
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
   for (byte i = 0; i <= 53; i++) {
-    if (i == 0 || i == 1 || i==10 || i == 50 || i == 51 || i == 52 || i == 53) {
+    if (i == 0 || i == 1 || i == 10 || i == 50 || i == 51 || i == 52 || i == 53) {
       mode_action[i] = 'x';
       mode_val[i] = 'x';
     }
@@ -72,13 +73,11 @@ void setup(void)
   }
 #endif
 
-
-
 }
 
 void loop(void)
 {
-  EthernetBonjour.run();
+  //  EthernetBonjour.run();
   EthernetClient client = httpServer.available();
   if (client) {
     while (client.connected()) {
@@ -196,7 +195,7 @@ void allonoff(EthernetClient client) {
   for (byte i = 0; i <= 13; i++) {
     if (mode_action[i] == 'o') {
       digitalWrite(i, value);
-      mode_val[i]=value;
+      mode_val[i] = value;
     }
   }
 #endif
@@ -204,11 +203,11 @@ void allonoff(EthernetClient client) {
   for (byte i = 0; i <= 53; i++) {
     if (mode_action[i] == 'o') {
       digitalWrite(i, value);
-      mode_val[i]=value;
+      mode_val[i] = value;
     }
   }
 #endif
-client.stop();
+  client.stop();
 
 }
 
@@ -287,10 +286,9 @@ void allstatus(EthernetClient client) {
 }
 
 void update_input() {
-  for (int i = 0; i < sizeof(mode_action); i++) {
+  for (byte i = 0; i < sizeof(mode_action); i++) {
     if (mode_action[i] == 'i') {
       mode_val[i] = digitalRead(i);
-
     }
   }
 }
