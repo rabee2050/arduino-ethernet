@@ -2,20 +2,20 @@
   TATCO Inc.
   Contact:
   info@tatco.cc
-
-
+  
   created 10 Oct 2015
   by Rabee Alhattawi
   modified 04 Nov 2016
   by Rabee Alhattawi
   https://github.com/rabee2050/Arduino-Ethernet-Kit.git
-
+  
   Note:
   1- This sketch compatable with Eathernet shield and Wiznet W5100
   2- Tested with Mega, Uno, Leo
   3- Uno & Leo pins# 10, 11, 12, 13 used for ethernet shield
   4- Mega Pins# 10, 50, 51, 52, 53 used for ethernet shield
   5- EthernetBonjour not completely tested, stability issues have to be considered.
+  
 */
 
 #include <SPI.h>
@@ -280,6 +280,7 @@ void allstatus(EthernetClient client) {
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega16U4__)//UNO
   client.println(F("kit_uno\","));
 #endif
+  client.println(F("\"boardtype\":\"ethernet\","));
   client.println(F("\"boardstatus\":1"));
   client.println(F("}"));
   client.stop();
