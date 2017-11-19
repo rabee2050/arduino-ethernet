@@ -1,26 +1,32 @@
 /*
-  TATCO Inc.
+  Done By TATCO Inc.
+
   Contact:
   info@tatco.cc
-  
-  created 10 Oct 2015
-  by Rabee Alhattawi
-  modified 04 Nov 2016
-  by Rabee Alhattawi
-  https://github.com/rabee2050/Arduino-Ethernet-Kit.git
-  
+
+  Release Notes:
+  - Created 10 Oct 2015
+  - V2 Updated 04 Nov 2016
+  - V3 Updated 05 Oct 2017
+
   Note:
   1- This sketch compatable with Eathernet shield and Wiznet W5100
   2- Tested with Mega, Uno, Leo
   3- Uno & Leo pins# 10, 11, 12, 13 used for ethernet shield
   4- Mega Pins# 10, 50, 51, 52, 53 used for ethernet shield
   5- EthernetBonjour not completely tested, stability issues have to be considered.
-  
+
 */
 
 #include <SPI.h>
 #include <Ethernet.h>
+#include <Servo.h>
 //#include <EthernetBonjour.h>//to resolve host names via MDNS (Multicast DNS)
+
+
+#define lcd_size 3 //this will define number of LCD on the phone app
+int refresh_time = 15; //the data will be updated on the app every 5 seconds.
+
 
 byte mac[] = { 0x00, 0xAA, 0xBB, 0xCC, 0xDA, 0x02 };
 //IPAddress ip(192, 168, 1, 10); //Uncomment for fixed IP or leave for DHCP
@@ -29,12 +35,19 @@ EthernetClient client;
 
 char mode_action[54];
 int mode_val[54];
+Servo myServo[53];
+
+String mode_feedback;
+String lcd[lcd_size];
+String api, channel, notification, user_id;
+
+String httpOk = "HTTP/1.1 200 OK\r\n Content-Type: text/plain \r\n\r\n";
 
 void setup(void)
 {
-//  while (!Serial) {
-//    ;// wait for serial port to connect. Needed for Leonardo only
-//  }
+  while (!Serial) {
+    ;// wait for serial port to connect. Needed for Leonardo only
+  }
   Serial.begin(9600);
   Serial.println(F("Please wait for IP... "));
   //Ethernet.begin(mac, ip);// Uncomment for fixed IP
@@ -43,59 +56,40 @@ void setup(void)
   //  EthernetBonjour.begin("ethernet");//Insted of IP you can use hostname http://ethernet.local to connect in the app.-->> for iOS only
   //  EthernetBonjour.addServiceRecord("ethernet", 80, MDNSServiceTCP);
   Serial.println(Ethernet.localIP());
-
-#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-  for (byte i = 0; i <= 53; i++) {
-    if (i == 0 || i == 1 || i == 10 || i == 50 || i == 51 || i == 52 || i == 53) {
-      mode_action[i] = 'x';
-      mode_val[i] = 'x';
-    }
-    else {
-      mode_action[i] = 'o';
-      mode_val[i] = 0;
-      pinMode(i, OUTPUT);
-    }
-  }
-
-#endif
-
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
-  for (byte i = 0; i <= 13; i++) {
-    if (i == 0 || i == 1  || i == 10 || i == 11 || i == 12 || i == 13 ) {
-      mode_action[i] = 'x';
-      mode_val[i] = 'x';
-    }
-    else {
-      mode_action[i] = 'o';
-      mode_val[i] = 0;
-      pinMode(i, OUTPUT);
-    }
-  }
-#endif
-
+  boardInit();
 }
 
 void loop(void)
 {
+
+  lcd[0] = "Test 1 LCD";// you can send any data to your mobile phone.
+  lcd[1] = "Test 2 LCD";// you can send any data to your mobile phone.
+  lcd[2] = analogRead(1);//  send analog value of A1
+
   //  EthernetBonjour.run();
+
   EthernetClient client = httpServer.available();
   if (client) {
     while (client.connected()) {
       if (client.available()) {
-        update_input();
         process(client);
+        delay(100);
+        client.flush();
+        client.stop();
       }
     }
-    delay(100);
-    client.flush();
-    client.stop();
   }
+  update_input();
 }
 
 void process(EthernetClient client) {
-  String a = client.readStringUntil('/');
-  a = client.readStringUntil('/');
+  String getString = client.readStringUntil('/');
+  String arduinoString = client.readStringUntil('/');
   String command = client.readStringUntil('/');
+
+  if (command == "terminal") {
+    terminalCommand(client);
+  }
 
   if (command == "digital") {
     digitalCommand(client);
@@ -103,6 +97,10 @@ void process(EthernetClient client) {
 
   if (command == "analog") {
     analogCommand(client);
+  }
+
+  if (command == "servo") {
+    servo(client);
   }
 
   if (command == "mode") {
@@ -113,12 +111,30 @@ void process(EthernetClient client) {
     allonoff(client);
   }
 
+  if (command == "refresh") {
+    refresh(client);
+  }
+
   if (command == "allstatus") {
     allstatus(client);
   }
 
 }
 
+
+
+void terminalCommand(EthernetClient client) {//Here you recieve data form app terminal
+  String data = client.readStringUntil('/');
+  Serial.println(data);
+  client.print(httpOk);
+}
+
+void refresh(EthernetClient client) {
+  int value;
+  value = client.parseInt();
+  refresh_time = value;
+  client.print(httpOk);
+}
 
 void digitalCommand(EthernetClient client) {
   int pin, value;
@@ -127,14 +143,8 @@ void digitalCommand(EthernetClient client) {
     value = client.parseInt();
     digitalWrite(pin, value);
     mode_val[pin] = value;
-
-    client.println(F("HTTP/1.1 200 OK"));
-    client.println(F("Content-Type: text/html"));
-    client.print(value);
-    client.println(F("Connection: close"));
-    client.stop();
+    client.print(httpOk);
   }
-
 }
 
 void analogCommand(EthernetClient client) {
@@ -144,23 +154,32 @@ void analogCommand(EthernetClient client) {
     value = client.parseInt();
     analogWrite(pin, value);
     mode_val[pin] = value;
+    client.print(httpOk);
   }
-  client.stop();
+}
+
+void servo(EthernetClient client) {
+  int pin, value;
+  pin = client.parseInt();
+  if (client.read() == '/') {
+    value = client.parseInt();
+    myServo[pin].write(value);
+    mode_val[pin] = value;
+    client.print(httpOk);
+  }
 }
 
 void modeCommand(EthernetClient client) {
-  int pin;
-  pin = client.parseInt();
-
+  int pin = client.parseInt();
   String mode = client.readStringUntil(' ');
-  client.println("HTTP/1.1 200 OK");
-  client.println("Content-Type: text/html");
-  client.println("Connection: close");
-  client.println();
+  myServo[pin].detach();
+  client.print(httpOk);
 
   if (mode == "/input") {
     pinMode(pin, INPUT);
     mode_action[pin] = 'i';
+    mode_val[pin] = 0;
+    digitalWrite(pin, LOW);
     client.print(F("D"));
     client.print(pin);
     client.print(F(" set as INPUT!"));
@@ -169,6 +188,8 @@ void modeCommand(EthernetClient client) {
   if (mode == "/output") {
     pinMode(pin, OUTPUT);
     mode_action[pin] = 'o';
+    mode_val[pin] = 0;
+    digitalWrite(pin, LOW);
     client.print(F("D"));
     client.print(pin);
     client.print(F(" set as OUTPUT!"));
@@ -177,28 +198,28 @@ void modeCommand(EthernetClient client) {
   if (mode == "/pwm") {
     pinMode(pin, OUTPUT);
     mode_action[pin] = 'p';
+    mode_val[pin] = 0;
+    digitalWrite(pin, LOW);
     client.print(F("D"));
     client.print(pin);
     client.print(F(" set as PWM!"));
   }
-  client.stop();
+
+  if (mode == "/servo") {
+    digitalWrite(pin, LOW);
+    myServo[pin].attach(pin);
+    mode_action[pin] = 's';
+    mode_val[pin] = 0;
+    client.print(F("D"));
+    client.print(pin);
+    client.print(F(" set as SERVO!"));
+  }
 }
 
 void allonoff(EthernetClient client) {
-  int pin, value;
-  value = client.parseInt();
-  client.println("HTTP/1.1 200 OK");
-  client.println("Content-Type: text/html");
-  client.println("Connection: close");
-  client.println();
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
-  for (byte i = 0; i <= 13; i++) {
-    if (mode_action[i] == 'o') {
-      digitalWrite(i, value);
-      mode_val[i] = value;
-    }
-  }
-#endif
+  int value = client.parseInt();
+  client.print(httpOk);
+
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
   for (byte i = 0; i <= 53; i++) {
     if (mode_action[i] == 'o') {
@@ -207,20 +228,27 @@ void allonoff(EthernetClient client) {
     }
   }
 #endif
-  client.stop();
+
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
+  for (byte i = 0; i <= 13; i++) {
+    if (mode_action[i] == 'o') {
+      digitalWrite(i, value);
+      mode_val[i] = value;
+    }
+  }
+#endif
 
 }
 
 void allstatus(EthernetClient client) {
-  //Send all data in JSON format
+  //Sending all data in JSON format
   client.println(F("HTTP/1.1 200 OK"));
-  client.println(F("<!DOCTYPE html>"));
   client.println(F("content-type:application/json"));
   client.println(F("Connection: close"));
   client.println();
   client.println(F("{"));
 
-  client.print(F("\"mode\":["));
+  client.print(F("\"m\":["));//m for Pin Mode
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
   for (byte i = 0; i <= 53; i++) {
     client.print(F("\""));
@@ -239,7 +267,7 @@ void allstatus(EthernetClient client) {
 #endif
   client.println(F("],"));
 
-  client.print(F("\"mode_val\":["));
+  client.print(F("\"v\":["));// v for Mode value
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
   for (byte i = 0; i <= 53; i++) {
     client.print(mode_val[i]);
@@ -254,7 +282,7 @@ void allstatus(EthernetClient client) {
 #endif
   client.println(F("],"));
 
-  client.print(F("\"analog\":["));
+  client.print(F("\"a\":["));// a For Analog
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
   for (byte i = 0; i <= 15; i++) {
     client.print(analogRead(i));
@@ -270,20 +298,24 @@ void allstatus(EthernetClient client) {
 #endif
   client.println("],");
 
-  client.print(F("\"boardname\":\""));
-#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)//Mega
-  client.println(F("kit_mega\","));
-#endif
-#if defined(__AVR_ATmega32U4__)//Leo
-  client.println(F("kit_leo\","));
-#endif
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega16U4__)//UNO
-  client.println(F("kit_uno\","));
-#endif
-  client.println(F("\"boardtype\":\"ethernet\","));
-  client.println(F("\"boardstatus\":1"));
+
+  client.print("\"l\":[");// l for LCD
+  for (byte i = 0; i <= lcd_size - 1; i++) {
+    client.print("\"");
+    client.print(lcd[i]);
+    client.print("\"");
+    if (i != lcd_size - 1)client.print(",");
+  }
+  client.println("],");
+
+  client.print("\"f\":\"");// f for Feedback.
+  client.print(mode_feedback);
+  client.println("\",");
+  client.print("\"t\":\"");//t for refresh Time .
+  client.print(refresh_time);
+  client.println("\"");
   client.println(F("}"));
-  client.stop();
+  //  client.stop();
 }
 
 void update_input() {
@@ -292,4 +324,37 @@ void update_input() {
       mode_val[i] = digitalRead(i);
     }
   }
+}
+
+void boardInit() {
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)//Mega
+  for (byte i = 0; i <= 53; i++) {
+    if (i == 0 || i == 1 || i == 10 || i == 50 || i == 51 || i == 52 || i == 53) {
+      mode_action[i] = 'x';
+      mode_val[i] = 0;
+    }
+    else {
+      mode_action[i] = 'o';
+      mode_val[i] = 0;
+      pinMode(i, OUTPUT);
+    }
+  }
+
+#endif
+
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)//Leo or Uno
+  for (byte i = 0; i <= 13; i++) {
+    if (i == 0 || i == 1  || i == 10 || i == 11 || i == 12 || i == 13 ) {
+      mode_action[i] = 'x';
+      mode_val[i] = 0;
+    }
+    else {
+      mode_action[i] = 'o';
+      mode_val[i] = 0;
+      pinMode(i, OUTPUT);
+    }
+  }
+#endif
+
+
 }
