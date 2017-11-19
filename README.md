@@ -30,7 +30,7 @@ Applications:
 - Robots control.
 
 Requirements:
-- CC3000 sheild or module
+- Ethernet sheild or module
 - Arduino Uno, Leonardo or Mega
 
 Check this youtube to see in real world:	
