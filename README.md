@@ -1,8 +1,8 @@
 # Arduino-Ethernet-Kit
 This sketch work with the app on both iOS and Android : "Arduino Ethernet Kit"
 
-- iOS:
-- Android: 
+- iOS: https://itunes.apple.com/us/app/arduino-ethernet-kit/id1089537034?mt=8
+- Android: https://play.google.com/store/apps/details?id=com.arduino.ethernetkit&hl=en
 
 Features:
 - Best in class Arduino Ethernet controller.
