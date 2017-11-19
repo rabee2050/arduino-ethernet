@@ -33,5 +33,4 @@ Requirements:
 - Ethernet sheild or module
 - Arduino Uno, Leonardo or Mega
 
-Check this youtube to see in real world:	
-- 
+Check this youtube to see in real world:
