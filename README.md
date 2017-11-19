@@ -1,26 +1,37 @@
 # Arduino-Ethernet-Kit
 This sketch work with the app on both iOS and Android : "Arduino Ethernet Kit"
 
+- iOS:
+- Android: 
+
 Features:
-- Read & write digital pins
-- Read & write PWM pins 
-- Read analog pins. 
-- New and easy user interface.
+- Best in class Arduino Ethernet controller.
+- Read & write digital pins. 
+- Read & write PWM pins.
+- Control SERVO motors.
+- Read analog pins.
+- LCD: you can send any data from Arduino to your mobile app.
+- Terminal: you can send any data from mobile app to your Arduino.
+- Assign action sheet: to do action with the recieved data 
+  like turnning flash ON or send notification or trigger output switch.
+- Super easy user interface.
 - Remember last status of the pins.
-- Change the mode of the pin (Output, PWM or Input).
+- Change the mode of the pin (Output, PWM, SERVO or Input).
 - Automatic connect to Arduino.
-- Rename the label of each pin.
+- Ability to rename the label of each pin.
 
 Applications:
+
 - Smart Home.
 - Automation.
 - Hoppy projects.
 - Schools & university projects.
 - Remote control.
+- Robots control.
 
 Requirements:
-- Any of Arduino (Uno, Mega, Leonardo) 
-- Ethernet shield.
+- CC3000 sheild or module
+- Arduino Uno, Leonardo or Mega
 
 Check this youtube to see in real world:	
-- http://
+- 
