@@ -1,4 +1,4 @@
-# ESP8266-Kit
+# Ethernet-Kit
 This sketch is compatible with ethernet shield and :
 - 1- Arduino Mega
 - 2- Arduino Uno 
