@@ -1,8 +1,21 @@
 /*
-  Done By TATCO Inc.
+  Title  : Ethernet Kit
+  version: V4.
+  Contact: info@tatco.cc
+  Done By: TATCO Inc.
+  github : https://github.com/rabee2050/arduino-ethernet
+  Youtube: http://tatco.cc
 
-  Contact:
-  info@tatco.cc
+  App - Pro Version:
+  iOS    : https://itunes.apple.com/us/app/ethernet-pro/id1330484246?ls=1&mt=8
+  Android: https://play.google.com/store/apps/details?id=com.arduino.ethernetkitpro
+
+  App - Free Version:
+  iOS    : https://itunes.apple.com/us/app/arduino-ethernet-kit/id1089537034?mt=8
+  Android: https://play.google.com/store/apps/details?id=com.arduino.ethernetkit&hl=en
+
+  Important Note: Any additional user built in functions will make UNO or Leonardo unstable 
+  due of memory shortage. Recommend to use Arduino MEGA in that case.
 
   Release Notes:
   - Created 10 Oct 2015
@@ -28,7 +41,7 @@ String protectionPassword = ""; //This will not allow anyone to add or control y
 String boardType;
 
 
-byte mac[] = { 0x00, 0xAA, 0xBB, 0xCC, 0xDA, 0x02 };
+byte mac[] = { 0x00, 0xAA, 0xBB, 0xCC, 0xDA, 0x02 };//Must be changed if you are using more than one board on the same network.
 //IPAddress ip(192, 168, 1, 100); //Uncomment for fixed IP
 EthernetServer server(80);
 EthernetClient client;
@@ -40,6 +53,7 @@ Servo servoArray[53];
 String lcd[lcdSize];
 String httpAppJsonOk = "HTTP/1.1 200 OK\r\n content-type:application/json \r\n\r\n";
 unsigned long serialTimer = millis();
+float appBuildVersion = 4.0;
 
 void setup(void)
 {
@@ -285,6 +299,9 @@ void allstatus(EthernetClient client) {
   dataResponse += "],";
   dataResponse += "\"t\":\""; //t for Board Type .
   dataResponse += boardType;
+  dataResponse += "\",";
+  dataResponse += "\"b\":\""; //b for app build version .
+  dataResponse += appBuildVersion;
   dataResponse += "\",";
   dataResponse += "\"p\":\""; // p for Password.
   dataResponse += protectionPassword;
